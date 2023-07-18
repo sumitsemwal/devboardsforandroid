@@ -15,7 +15,13 @@ Devices Supported
 
 .. toctree::
         :maxdepth: 1
-        :caption: RB5 / RB3 (also known as DB845c)
+        :caption: RB5
 
-	rb5-rb3
+	rb5
+
+.. toctree::
+        :maxdepth: 1
+        :caption: RB3 (also known as DB845c)
+
+	rb3
 
