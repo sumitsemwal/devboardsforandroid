@@ -16,10 +16,10 @@ More details about the dev-board can be found at the `96boards page
 
 - `Documentation <https://www.96boards.org/documentation/consumer/hikey/hikey960/hardware-docs/hardware-user-manual.md.html>`_
 - Kernel source code - TBD
-- `Device specific AOSP files <https://android.googlesource.com/device/linaro/hikey/>`_
+- `AOSP device config  <https://android.googlesource.com/device/linaro/hikey/>`_
 - `prebuilt kernels <https://android.googlesource.com/device/linaro/hikey-kernel/>`_
 - Local manifest - TBD
-- `Vendor specific files <https://gitlab.com/LinaroLtd/linaro-aosp/linaro-vendor-package/-/tree/master/>`_
+- `Vendor binary blobs <https://gitlab.com/LinaroLtd/linaro-aosp/linaro-vendor-package/-/tree/master/>`_
     - This was required as a binary package when the board was hosted at AOSP.
       It will be updated to use vendor files via the manifest instead.
 
