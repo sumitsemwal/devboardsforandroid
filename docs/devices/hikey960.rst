@@ -19,7 +19,7 @@ More details about the dev-board can be found at the `96boards page
 - `AOSP device config  <https://android.googlesource.com/device/linaro/hikey/>`_
 - `prebuilt kernels <https://android.googlesource.com/device/linaro/hikey-kernel/>`_
 - Local manifest - TBD
-- `Vendor binary blobs <https://gitlab.com/LinaroLtd/linaro-aosp/linaro-vendor-package/-/tree/master/>`_
+- `Vendor binary blobs <http://releases.devboardsforandroid.linaro.org/vendor-packages>`_
     - This was required as a binary package when the board was hosted at AOSP.
       It will be updated to use vendor files via the manifest instead.
 
