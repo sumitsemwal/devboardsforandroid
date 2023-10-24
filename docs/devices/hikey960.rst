@@ -7,19 +7,52 @@
 Hikey960
 ========
 
-Hikey960 until recently was a supported dev-board in AOSP. Since it is no
-longer marked as supported, this initiative will keep it working with AOSP
-and relevant kernels.
+Hikey960 until recently was a devboard listed on the AOSP reference boards
+page. It is now in maintenance phase mostly used to test legacy builds. No
+further development activity is planned for this devboard.
 
-More details about the dev-board can be found at the `96boards page 
+We are hosting it here as an example of how the devboardsforandroid
+infrastructure can be used to support devboards.
+
+More details about the devboard can be found at the `96boards page 
 <https://www.96boards.org/product/hikey960/>`_.
 
 - `Documentation <https://www.96boards.org/documentation/consumer/hikey/hikey960/hardware-docs/hardware-user-manual.md.html>`_
 - Kernel source code - will be shared soon
-- `AOSP device config  <https://android.googlesource.com/device/linaro/hikey/>`_
-- `prebuilt kernels <https://android.googlesource.com/device/linaro/hikey-kernel/>`_
-- Local manifest - TBD
+
+**Artifacts hosted here**
+
+- `device config <https://source.devboardsforandroid.linaro.org/device/linaro/hikey960/>`_
+    - This also includes vendor binaries for Hikey960.
+- `prebuilt kernels <https://source.devboardsforandroid.linaro.org/device/linaro/hikey960-kernel/>`_
+- `Local manifest <https://source.devboardsforandroid.linaro.org/platform/manifest/>`_
+
+Build Instructions
+
+::
+
+$ repo init -u https://android.googlesource.com/platform/manifest -b main
+$ git clone https://gerrit.devboardsforandroid.linaro.org/platform/manifest .repo/local_manifests/
+$ repo sync -j`nproc`
+$ source build/envsetup.sh
+$ lunch linaro_hikey960-userdebug
+$ make -j$(nproc)
+
+**Artifacts hosted at AOSP (available as of 24 Oct, 2023)**
+
+- `device config at AOSP <https://android.googlesource.com/device/linaro/hikey/>`_
+- `prebuilt kernels at AOSP <https://android.googlesource.com/device/linaro/hikey-kernel/>`_
 - `Vendor binary blobs <http://releases.devboardsforandroid.linaro.org/vendor-packages>`_
-    - This was required as a binary package when the board was hosted at AOSP.
-      It will be updated to use vendor files via the manifest instead.
+    - This is required as a binary package when using the AOSP based artifacts.
+
+Build instructions
+
+::
+
+$ repo init -u https://android.googlesource.com/platform/manifest -b main
+$ repo sync -j`nproc`
+$ ./device/linaro/hikey/fetch-vendor-package.sh
+$ source build/envsetup.sh
+$ lunch hikey960-userdebug
+$ make -j`nproc`
 
