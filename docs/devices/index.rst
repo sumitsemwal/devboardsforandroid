@@ -25,3 +25,9 @@ Devices Supported
 
 	rb3
 
+.. toctree::
+        :maxdepth: 1
+        :caption: VIM3
+
+	vim3
+
