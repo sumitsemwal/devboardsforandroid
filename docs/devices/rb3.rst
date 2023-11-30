@@ -120,3 +120,7 @@ Then rebuild AOSP using:
 
    make TARGET_KERNEL_USE=mainline -j`nproc`'
 
+
+Device Maintainer(s)
+********************
+- Amit Pundir <pundir at #aosp-developers on OFTC IRC>

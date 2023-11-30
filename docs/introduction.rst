@@ -42,9 +42,8 @@ manifests, device specific files and binaries (like bootloader, firmware, HALs)
 and documentation.
 
 
-
-Maintainer(s)
-*************
+Community Maintainer(s)
+***********************
 
 - Sumit Semwal <sumit.semwal@linaro.org>
 

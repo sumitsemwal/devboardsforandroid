@@ -56,3 +56,7 @@ $ source build/envsetup.sh
 $ lunch hikey960-userdebug
 $ make -j`nproc`
 
+
+Device Maintainer(s)
+********************
+- Yongqin Liu - <liuyq at #aosp-developers on OFTC IRC>

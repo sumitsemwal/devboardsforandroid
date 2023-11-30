@@ -128,3 +128,7 @@ ToDo / Known Issues
 * WiFi-BT drivers are WIP and not upstreamed yet. You can find the patches here
   https://git.linaro.org/people/amit.pundir/linux.git/log/?h=rbX-mainline
 
+
+Device Maintainer(s)
+********************
+- Amit Pundir <pundir at #aosp-developers on OFTC IRC>
