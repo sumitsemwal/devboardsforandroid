@@ -121,6 +121,81 @@ Then rebuild AOSP using:
    make TARGET_KERNEL_USE=mainline -j`nproc`'
 
 
+Booting AOSP from MMC Sdcard
+----------------------------
+
+Booting AOSP on DB845c from a mmc sdcard is an experimental build configuration
+and is only intended to be used in the LKFT lab. Regular users should not enable
+this build flag and should flash and boot from the UFS instead.
+
+Booting from external sdcards will help prevent the internal emmc/ufs wear off
+in the long run and extend the lab-life of most of our devboards. To avoid
+flashing anything on internal UFS and boot solely from a sdcard, we are
+switching to chainloading U-Boot from ABL bootloader. For now we are using a WIP
+`upstream u-boot fork <https://source.devboardsforandroid.linaro.org/platform/external/u-boot/>`_.
+
+.. note::
+   In the long run we plan to switch to AOSP/external/u-boot project to catch up
+   with the Android bootloader features.
+
+Set ``TARGET_SDCARD_BOOT=true`` at build time to build and boot AOSP from a mmc
+sdcard. This device configuration need atleast 8GB sdcard to boot from. Here are
+the instructions to prepare and flash AOSP images on a MMC sdcard:
+
+.. note::
+   Following commands that are listed with **=>** prompt means those commands need
+   to be run from the u-boot prompt on the device and commands with **$** means
+   they need to be run from the HOST machine.
+
+* Boot DB845c in the fastboot mode as mentioned above and erase the boot
+  partition to make sure that every reboot/reset lands at the ABL fastboot mode
+  prompt.
+
+::
+
+   $ fastboot erase boot
+
+* Build U-Boot for DB845c and boot with it:
+
+::
+
+   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot
+   $ cd u-boot
+   $ source envsetup.sh
+   $ mu qcom_defconfig
+   $ budt dragonboard845c
+   $ fastboot boot /tmp/u-boot.img   # this will boot U-Boot on DB845c
+
+* Prepare AOSP partition layout on the sdcard from the U-Boot prompt. Make sure
+  that a 8GB+ MMC sdcard is plugged into the board:
+
+::
+
+   => run gpt_mmc_aosp
+   => reset                          # this will reboot in ABL fastboot mode
+   $ fastboot boot /tmp/u-boot.img
+   => run fastboot                   # starting U-Boot's fastboot command
+   $ fastboot erase boot erase boot_init erase vendor_boot erase modemst1 erase modemst2 erase fsg erase fsc erase misc erase metadata erase super erase userdata
+   $ fastboot reboot                 # rebooting in ABL fastboot mode
+   $ fastboot boot /tmp/u-boot.img
+   => run fastboot
+
+* Build AOSP target db845c-userdebug with MMC sdcard support and flash images on
+  the MMC sdcard. Make sure we run U-Boot's fastboot command on the device
+  before running the flash commands:
+
+::
+
+   $ make TARGET_SDCARD_BOOT=true -j`nproc`
+   $ cd out/target/product/db845c
+   $ fastboot flash super ./super.img flash userdata ./userdata.img format:ext4 metadata reboot
+   $ fastboot boot ./boot.img
+
+.. note::
+   We do not flash **boot.img** on the sdcard; instead, we load the boot image from
+   device RAM by running ``fastboot boot boot.img``.
+
+
 Device Maintainer(s)
 ********************
 - Amit Pundir <pundir at #aosp-developers on OFTC IRC>
