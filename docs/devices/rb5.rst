@@ -25,11 +25,12 @@ bootloader binaries (build #29 and above) are `hosted here
 
 For flashing instructions checkout `96boards RB5 recovery page <https://www.96boards.org/documentation/consumer/dragonboard/qualcomm-robotics-rb5/installation/board-recovery.md.html>`_.
 
-NOTE:
+.. note::
+   You can also update bootloader binaries by running flashall script, which is
+   a part of the vendor package of RB5 AOSP build target. Boot in fastboot mode
+   and run following command from your HOST machine:
 
-You can also update bootloader binaries by running flashall script, which is
-a part of the vendor package of RB5 AOSP build target. Boot in fastboot mode
-and run following command from your HOST machine::
+.. code::
 
    git clone https://gerrit.devboardsforandroid.linaro.org/linaro-vendor-package
    cd src/rb5/rb5-bootloader-ufs-aosp/

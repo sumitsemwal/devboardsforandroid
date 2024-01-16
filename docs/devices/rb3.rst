@@ -27,11 +27,12 @@ bootloader binaries (build #97 and above) are `hosted here
 For flashing instructions checkout
 `96boards DB845c recovery page <https://www.96boards.org/documentation/consumer/dragonboard/dragonboard845c/installation/board-recovery.md.html>`_.
 
-NOTE:
+.. note::
+   You can also update bootloader binaries by running **flashall** script, which is
+   a part of the vendor package of the RB3 AOSP build target. Boot in fastboot mode
+   and run following command from your HOST machine:
 
-You can also update bootloader binaries by running **flashall** script, which is
-a part of the vendor package of the RB3 AOSP build target. Boot in fastboot mode
-and run following command from your HOST machine::
+.. code::
 
    git clone https://gerrit.devboardsforandroid.linaro.org/linaro-vendor-package
    cd src/db845c/dragonboard-845c-bootloader-ufs-aosp/
