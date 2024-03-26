@@ -31,3 +31,9 @@ Devices Supported
 
 	vim3
 
+.. toctree::
+        :maxdepth: 1
+        :caption: SM8550-HDK (WIP)
+
+	sm8550-hdk
+
