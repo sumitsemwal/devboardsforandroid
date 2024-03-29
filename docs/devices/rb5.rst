@@ -58,7 +58,7 @@ in fastboot mode::
 Compile AOSP from sources for RB5
 ---------------------------------
 
-#. Download the AOSP source tree and build rb5-userdebug build target:
+#. Download the AOSP source tree and build db845c-trunk_staging-userdebug build target:
 
 ::
 
