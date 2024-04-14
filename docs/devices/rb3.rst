@@ -176,7 +176,7 @@ the instructions to prepare and flash AOSP images on a MMC sdcard:
    => reset                          # this will reboot in ABL fastboot mode
    $ fastboot boot /tmp/u-boot.img
    => run fastboot                   # starting U-Boot's fastboot command
-   $ fastboot erase boot erase boot_init erase vendor_boot erase modemst1 erase modemst2 erase fsg erase fsc erase misc erase metadata erase super erase userdata
+   $ fastboot erase boot erase init_boot erase vendor_boot erase modemst1 erase modemst2 erase fsg erase fsc erase misc erase metadata erase super erase userdata
    $ fastboot reboot                 # rebooting in ABL fastboot mode
    $ fastboot boot /tmp/u-boot.img
    => run fastboot
