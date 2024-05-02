@@ -33,7 +33,7 @@ Devices Supported
 
 .. toctree::
         :maxdepth: 1
-        :caption: SM8550-HDK (WIP)
+        :caption: SM8550-HDK
 
 	sm8550-hdk
 
