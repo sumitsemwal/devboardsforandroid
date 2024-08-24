@@ -133,14 +133,14 @@ Booting from external sdcards will help prevent the internal emmc/ufs wear off
 in the long run and extend the lab-life of most of our devboards. To avoid
 flashing anything on internal UFS and boot solely from a sdcard, we are
 switching to chainloading U-Boot from ABL bootloader. For now we are using a WIP
-`upstream u-boot fork <https://source.devboardsforandroid.linaro.org/platform/external/u-boot/>`_.
+`upstream u-boot fork <https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/rbx-integration>`_.
 
 .. note::
    In the long run we plan to switch to AOSP/external/u-boot project to catch up
    with the Android bootloader features.
 
 Set ``TARGET_SDCARD_BOOT=true`` at build time to build and boot AOSP from a mmc
-sdcard. This device configuration need atleast 8GB sdcard to boot from. Here are
+sdcard. This device configuration need atleast 16GB sdcard to boot from. Here are
 the instructions to prepare and flash AOSP images on a MMC sdcard:
 
 .. note::
@@ -160,7 +160,7 @@ the instructions to prepare and flash AOSP images on a MMC sdcard:
 
 ::
 
-   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot
+   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b rbx-integration
    $ cd u-boot
    $ source envsetup.sh
    $ mu qcom_defconfig
@@ -168,7 +168,7 @@ the instructions to prepare and flash AOSP images on a MMC sdcard:
    $ fastboot boot /tmp/u-boot.img   # this will boot U-Boot on DB845c
 
 * Prepare AOSP partition layout on the sdcard from the U-Boot prompt. Make sure
-  that a 8GB+ MMC sdcard is plugged into the board:
+  that a 16GB+ MMC sdcard is plugged into the board:
 
 ::
 
