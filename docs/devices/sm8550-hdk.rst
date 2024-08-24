@@ -122,6 +122,10 @@ prepare and flash AOSP images on a MMC sdcard:
 
 It should boot sm8x50 devices to UI with software rendering support.
 
+.. note::
+   To boot from the on-board UFS, build AOSP images with ``TARGET_SDCARD_BOOT=false``
+   build flag and follow the same flashing and booting instructions as above.
+
 
 Building and booting with custom kernel
 ---------------------------------------
