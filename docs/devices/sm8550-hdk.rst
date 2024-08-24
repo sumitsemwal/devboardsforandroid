@@ -9,11 +9,11 @@ SM8550-HDK
 .. note::
     sm8x50-userdebug is an AOSP build target for Snapdragon 8 Gen devboards.
     It is supported only on v6.8+ kernel versions. Primarily supported and
-    tested on sm8550-hdk. Other devboards (sm8550-qrd and sm8650-qrd) are
+    tested on sm8550-hdk. Other `Snapdragon 8 Gen devboards <https://estore.lantronix.com/collections/product-development-kits>`_
+    like sm8450-qrd, sm8450-hdk, sm8550-qrd, sm8650-qrd, and sm8650-hdk are
     supported on the best efforts basis.
 
-
-`SM8550-HDK <https://www.lantronix.com/products/snapdragon-8-gen-2-mobile-hardware-development-kit/>`_
+`SM8550-HDK <https://estore.lantronix.com/collections/product-development-kits/products/snapdragon-8-gen-2-mobile-hardware-development-kit>`_
 is a Snapdragon 8 Gen 2 Mobile Hardware Development Kit.
 
 
@@ -31,13 +31,10 @@ using software rendering and linux-firmware binaries for now.
 land in linaro-vendor / linux-firmware repo to make sure that the device has
 more features enabled and is in a more usable state. Boot image header v2 is
 used for now, while we are working on releasing ABL with header v4 support.
-Also make sure you are running upstream kernel friendly ABL on SM8550-HDK.
 
 
-Download and Build Kernel and AOSP images from source for SM8x50 devices
-------------------------------------------------------------------------
-
-#. Download and build the AOSP source tree for sm8x50-userdebug build target:
+Compile AOSP from sources for SM8x50 (Snapdragon 8 Gen) devices
+---------------------------------------------------------------
 
 .. code::
 
@@ -50,12 +47,17 @@ Download and Build Kernel and AOSP images from source for SM8x50 devices
    lunch sm8x50-trunk_staging-userdebug
    make -j`nproc`
 
+The above instructions will build AOSP images for sm8x50 devboards. This default
+build supports booting from an mmc-sdcard (due to upstream UFS bugs currently
+being looked at) and will boot to UI using software rendering support.
 
-#. Flash sm8x50-userdebug AOSP images:
 
-Reboot sm8x50 in fastboot mode and run following commands to flash and boot AOSP:
+Flashing and booting AOSP from mmc-sdcard
+-----------------------------------------
 
-Disable verity and and erase AOSP partitions for any stale images:
+Reboot sm8x50 in fastboot mode and run following commands to disable verity
+verity and and erase AOSP partitions for any stale images and to make sure
+that every reboot/reset lands at the ABL fastboot mode prompt.
 
 .. code::
 
@@ -64,39 +66,114 @@ Disable verity and and erase AOSP partitions for any stale images:
    fastboot erase boot dtbo init_boot vendor_boot
    fastboot reboot bootloader
 
+Booting AOSP from a mmc sdcard is an experimental build configuration and is
+only intended to be used in the LKFT lab. But booting from mmc-sdcard is the
+default option on SM8550-HDK due to some upstream UFS breakages.
 
-Flash AOSP images:
+We chainload U-Boot from ABL bootloader and flash the, already plugged-in,
+mmc-sdcard. For now we are using a WIP `upstream u-boot fork
+<https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/wip/sm8x50/>`_.
+
+mmc boot configuration require atleast 16GB sdcard. Here are the instructions to
+prepare and flash AOSP images on a MMC sdcard:
+
+.. note::
+   Following commands that are listed with **=>** prompt means those commands need
+   to be run from the u-boot prompt on the device and commands with **$** means
+   they need to be run from the HOST machine.
+
+* Build U-Boot for SM8550-HDK and boot with it:
 
 .. code::
 
-   cd $AOSP/out/target/product/sm8x50/
-   fastboot flash super ./super.img flash userdata ./userdata.img format:ext4 metadata boot ./boot.img
+   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b wip/sm8x50
+   $ cd u-boot
+   $ make CROSS_COMPILE=aarch64-linux-gnu- qcom_defconfig all
+   $ gzip u-boot-nodtb.bin
+   $ mkbootimg --os_version 14.0.0 --os_patch_level 2023-10 --header_version 2 --kernel u-boot-nodtb.bin.gz --dtb dts/upstream/src/arm64/qcom/sm8550-hdk.dtb --pagesize 2048 --cmdline "" --output u-boot-sm8550-hdk.img
+   $ fastboot boot u-boot-sm8550-hdk.img # this will boot U-Boot on sm8550-hdk
 
+* Prepare AOSP partition layout on the sdcard from the U-Boot prompt. Make sure
+  that a 16GB+ MMC sdcard is plugged into the board:
+
+.. code::
+
+   => run gpt_mmc_aosp
+   => reset                          # this will reboot in ABL fastboot mode
+   $ fastboot boot u-boot-sm8550-hdk.img
+   => run fastboot                   # starting U-Boot's fastboot command
+   $ fastboot erase boot erase init_boot erase vendor_boot erase modemst1 erase modemst2 erase fsg erase fsc erase misc erase metadata erase super erase userdata
+   $ fastboot reboot                 # rebooting in ABL fastboot mode
+   $ fastboot boot u-boot-sm8550-hdk.img
+   => run fastboot
+
+* To flash images on the MMC sdcard, make sure we run U-Boot's fastboot command
+  on the device before running the following flash and boot commands:
+
+.. code::
+
+   cd out/target/product/sm8x50
+   fastboot flash super ./super.img flash userdata ./userdata.img format:ext4 metadata reboot
+   fastboot boot ./boot.img
+
+.. note::
+   We do not flash **boot.img** on the sdcard; instead, we load the boot image from
+   device RAM by running ``fastboot boot boot.img``.
 
 It should boot sm8x50 devices to UI with software rendering support.
 
 
-#. Download and build upstream tracking kernel for SM8x50 devices.
+Building and booting with custom kernel
+---------------------------------------
+
+The **Preferred** option is to build Android GKI kernel artifacts using official
+Bazel build instructions.
+
+#. Build android-mainline kernel for SM8x50 devices
+
+Run the following commands to clone the android-mainline repo including the
+kernel source, prebuilt Android toolchains and build scripts.
+
+.. code::
+
+   mkdir gki-repo
+   cd gki-repo
+   repo init -u https://android.googlesource.com/kernel/manifest -b common-android-mainline
+   repo sync -j`nproc`
+   tools/bazel clean
+   tools/bazel run //common:db845c_dist
+
+Now delete all the objects in
+$(AOSP_TOPDIR)device/linaro/dragonboard-kernel/android-mainline/, then copy
+build artifacts from out/db845c/dist/ to
+$(AOSP_TOPDIR)/device/linaro/dragonboard-kernel/android-mainline/
+
+Then rebuild AOSP and boot with new boot.img using:
+
+.. code::
+
+   make TARGET_KERNEL_USE=mainline bootimage -j`nproc`'
+   fastboot boot ./boot.img
+
+
+#. Download and build upstream tracking kernel
 
 .. code::
 
    git clone https://git.linaro.org/people/amit.pundir/linux -b rbX-mainline
    cd linux
-   make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- rbX_aosp_defconfig
+   make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- aosp_defconfig
    make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS=-@ -j`nproc`
    make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=./modules/ INSTALL_MOD_STRIP=1 modules_install -j`nproc`
-   cp arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/qrb5165-rb5.dtb arch/arm64/boot/dts/qcom/sdm845-db845c.dtb arch/arm64/boot/dts/qcom/sm8550-hdk.dtb arch/arm64/boot/dts/qcom/sm8550-qrd.dtb arch/arm64/boot/dts/qcom/sm8650-qrd.dtb $AOSP/device/linaro/dragonboard-kernel/android-upstream/
+   cp arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/qrb5165-rb5.dtb arch/arm64/boot/dts/qcom/sdm845-db845c.dtb arch/arm64/boot/dts/qcom/sm8450-hdk.dtb arch/arm64/boot/dts/qcom/sm8450-qrd.dtb arch/arm64/boot/dts/qcom/sm8550-hdk.dtb arch/arm64/boot/dts/qcom/sm8550-qrd.dtb arch/arm64/boot/dts/qcom/sm8650-hdk.dtb arch/arm64/boot/dts/qcom/sm8650-qrd.dtb $AOSP/device/linaro/dragonboard-kernel/android-upstream/
    find ./modules/lib/ -iname \*.ko -exec cp {} $AOSP/device/linaro/dragonboard-kernel/android-upstream/ \;
 
-
-#. Rebuild sm8x50-userdebug AOSP images with local kernel build:
+Then rebuild AOSP and boot with new boot.img using:
 
 .. code::
 
-   cd $AOSP
-   source ./build/envsetup.sh
-   lunch sm8x50-trunk_staging-userdebug
-   make TARGET_KERNEL_USE=upstream -j`nproc`
+   make TARGET_KERNEL_USE=upstream bootimage -j`nproc`'
+   fastboot boot ./boot.img
 
 
 Known issues and Troubleshooting on sm8550-hdk
@@ -109,24 +186,22 @@ Known issues and Troubleshooting on sm8550-hdk
    time is very high and it needs a power reset to recover.
 
    And then there is a run time UFS crash which leaves the device unusable.
-   v6.9-rc1 kernel will hopefully be more stable.
 
 #. At times `fastboot boot` run into the following failure:
 
 .. code::
 
-   $ fastboot boot ./boot.img
+   fastboot boot ./boot.img
    Sending 'boot.img' (19988 KB)                      OKAY [  0.460s]
    Booting                                            FAILED (remote: 'Failed to load/authenticate boot image: Load Error')
    fastboot: error: Command failed
-
 
 Run the following set of commands to recover from the above error:
 
 .. code::
 
-   $ fastboot reboot bootloader
-   $ fastboot set_active a boot ./boot.img
+   fastboot reboot bootloader
+   fastboot set_active a boot ./boot.img
 
 
 Device Maintainer(s)
