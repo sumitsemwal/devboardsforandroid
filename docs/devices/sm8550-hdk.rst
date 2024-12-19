@@ -3,8 +3,8 @@
  #
  # SPDX-License-Identifier: MIT
 
-SM8550-HDK
-==========
+SM8x50 (Snapdragon 8 Gen devboards)
+===================================
 
 .. note::
     sm8x50-userdebug is an AOSP build target for Snapdragon 8 Gen devboards.
@@ -63,7 +63,7 @@ that every reboot/reset lands at the ABL fastboot mode prompt.
 
    $AOSP/external/avb/avbtool.py make_vbmeta_image --flag 2 --padding_size 4096 --output ./vbmeta_disabled.img
    fastboot --disable-verity --disable-verification flash vbmeta ./vbmeta_disabled.img
-   fastboot erase boot dtbo init_boot vendor_boot
+   fastboot erase boot erase dtbo erase init_boot erase vendor_boot
    fastboot reboot bootloader
 
 Booting AOSP from a mmc sdcard is an experimental build configuration and is
@@ -166,9 +166,12 @@ Then rebuild AOSP and boot with new boot.img using:
 
    git clone https://git.linaro.org/people/amit.pundir/linux -b rbX-mainline
    cd linux
-   make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- aosp_defconfig
+   make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- mrproper
+   KCONFIG_CONFIG=./arch/arm64/configs/temp_aosp_rbx_sm8x50_defconfig ./scripts/kconfig/merge_config.sh -m -r ./arch/arm64/configs/aosp_defconfig ./kernel/configs/aosp_rbx_sm8x50.config
+   make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- temp_aosp_rbx_sm8x50_defconfig
    make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS=-@ -j`nproc`
    make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=./modules/ INSTALL_MOD_STRIP=1 modules_install -j`nproc`
+   rm arch/arm64/configs/temp_aosp_rbx_sm8x50_defconfig
    cp arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/qrb5165-rb5.dtb arch/arm64/boot/dts/qcom/sdm845-db845c.dtb arch/arm64/boot/dts/qcom/sm8450-hdk.dtb arch/arm64/boot/dts/qcom/sm8450-qrd.dtb arch/arm64/boot/dts/qcom/sm8550-hdk.dtb arch/arm64/boot/dts/qcom/sm8550-qrd.dtb arch/arm64/boot/dts/qcom/sm8650-hdk.dtb arch/arm64/boot/dts/qcom/sm8650-qrd.dtb $AOSP/device/linaro/dragonboard-kernel/android-upstream/
    find ./modules/lib/ -iname \*.ko -exec cp {} $AOSP/device/linaro/dragonboard-kernel/android-upstream/ \;
 

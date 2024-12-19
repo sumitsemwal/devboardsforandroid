@@ -33,7 +33,7 @@ Devices Supported
 
 .. toctree::
         :maxdepth: 1
-        :caption: SM8550-HDK
+        :caption: SM8x50 (Snapdragon 8 Gen devboards)
 
-	sm8550-hdk
+	sm8x50
 
