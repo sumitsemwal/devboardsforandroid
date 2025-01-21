@@ -127,6 +127,108 @@ It should boot sm8x50 devices to UI with software rendering support.
    build flag and follow the same flashing and booting instructions as above.
 
 
+Flashing and booting AOSP from mmc-sdcard using Generic Bootloader Library (GBL)
+--------------------------------------------------------------------------------
+
+.. note::
+   This configuration is tested only on SM8550-HDK. Booting AOSP from a mmc
+   sdcard using GBL is an experimental build configuration and is only
+   intended to be used in the LKFT lab.
+
+Reboot sm8x50 in fastboot mode and run following commands to disable verity
+and erase AOSP partitions for any stale images to make sure that every
+reboot/reset lands at the ABL fastboot mode prompt.
+
+.. code::
+
+   $ $AOSP/external/avb/avbtool.py make_vbmeta_image --flag 2 \
+     --padding_size 4096 --output ./vbmeta_disabled.img                                     # prepare vbmeta_disabled.img
+   $ fastboot --disable-verity --disable-verification flash vbmeta ./vbmeta_disabled.img    # disable verity
+   $ fastboot erase boot erase dtbo erase init_boot erase vendor_boot
+   $ fastboot reboot bootloader
+
+We chainload U-Boot from ABL bootloader and flash the, already plugged-in,
+mmc-sdcard. For SM8550-HDK, we are using a WIP `upstream u-boot fork
+<https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/wip/sm8x50-gbl-fastboot/>`_.
+Here are the instructions to prepare, flash and boot AOSP images from a mmc-sdcard
+using GBL. mmc-sdcard boot configuration require atleast 16GB sdcard.
+
+.. note::
+   Following commands that are listed with **=>** prompt means those commands need
+   to be run from the u-boot prompt on the device and commands with **$** means
+   they need to be run from the HOST machine.
+
+* Build U-Boot for SM8550-HDK and boot with it:
+
+.. code::
+
+   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b wip/sm8x50-gbl-fastboot
+   $ cd u-boot
+   $ make CROSS_COMPILE=aarch64-linux-gnu- clean qcom_defconfig all
+   $ gzip u-boot-nodtb.bin
+   $ mkbootimg --os_version 14.0.0 --os_patch_level 2023-10 --header_version 2 \
+     --kernel u-boot-nodtb.bin.gz --dtb dts/upstream/src/arm64/qcom/sm8550-hdk.dtb \
+     --pagesize 2048 --cmdline "" --output u-boot.img
+   $ fastboot boot u-boot.img                                                               # this will boot U-Boot on sm8550-hdk
+
+* Build GBL efi app and mcopy it over to the gbl.img:
+
+.. code::
+
+   $ repo init -u https://android.googlesource.com/kernel/manifest -b uefi-gbl-mainline
+   $ repo sync -j`nproc`
+   $ ./tools/bazel run //bootable/libbootloader:gbl_efi_dist \
+     --extra_toolchains=@gbl//toolchain:all --sandbox_debug --verbose_failures
+   $ dd if=/dev/zero of=gbl.img bs=1048576 count=128
+   $ mkfs.vfat gbl.img
+   $ mcopy -i gbl.img out/gbl_efi/gbl_aarch64.efi ::gbl_aarch64.efi
+
+* Build AOSP images with GBL support (boot image header v4 support with init_boot):
+
+.. code::
+
+   $ mkdir $AOSP
+   $ cd $AOSP
+   $ repo init -u https://android.googlesource.com/platform/manifest -b master
+   $ repo sync -j`nproc`
+   $ ./device/linaro/dragonboard/fetch-vendor-package.sh
+   $ source ./build/envsetup.sh
+   $ lunch sm8x50-trunk_staging-userdebug
+   $ make TARGET_SDCARD_BOOT=true TARGET_USES_GBL=true -j`nproc`
+
+The above instructions will build AOSP images (boot.img, init_boot.img, super.img, userdata.img
+and vendor_boot.img) for sm8x50 devboards under $AOSP/out/target/product/sm8x50 directory.
+
+* Prepare AOSP partition layout, flash and launch GBL and boot AOSP images on the sdcard.
+  Make sure that a 16GB+ MMC sdcard is plugged into the board:
+
+.. code::
+
+   => run gpt_mmc_aosp                                                                      # prepare AOSP style GPT partition layout
+                                                                                            # on the mmc-sdcard
+   => reset                                                                                 # this will reboot in ABL fastboot mode
+   $ fastboot set_active a boot u-boot.img                                                  # reboot U-Boot on sm8550
+   => run fastboot                                                                          # starting U-Boot's fastboot command
+   $ fastboot erase efi erase boot_a erase boot_b erase init_boot_a \
+     erase init_boot_b erase vendor_boot_a erase vendor_boot_b \
+     erase vbmeta_a erase vbmeta_b erase modemst1 erase modemst2 \
+     erase fsg erase fsc erase misc erase metadata erase super erase userdata               # erase mmc-sdcard partitions
+   $ fastboot flash efi ./gbl.img flash boot ./boot.img \
+     flash init_boot ./init_boot.img flash vendor_boot ./vendor_boot.img \
+     flash super ./super.img flash userdata ./userdata.img format:ext4 metadata             # flash GBL and AOSP images
+   $ fastboot --disable-verity --disable-verification flash vbmeta_a ./vbmeta_disabled.img  # disable verity
+   $ fastboot --disable-verity --disable-verification flash vbmeta_b ./vbmeta_disabled.img  # disable verity on _b slot as well just in case
+   $ fastboot reboot
+   $ fastboot set_active a boot u-boot.img                                                  # reboot U-Boot on sm8550
+   => run gbl                                                                               # launch GBL
+
+.. note::
+   The above "run gbl" command from U-Boot prompt will launch GBL and it will start
+   booting the newly flashed AOSP images to UI with software rendering support,
+   unless you press Backspace to interrupt the GBL launch and force it into the
+   fastboot mode over USB.
+
+
 Building and booting with custom kernel
 ---------------------------------------
 
