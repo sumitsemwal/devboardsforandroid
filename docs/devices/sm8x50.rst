@@ -179,7 +179,7 @@ using GBL. mmc-sdcard boot configuration require atleast 16GB sdcard.
    $ repo sync -j`nproc`
    $ ./tools/bazel run //bootable/libbootloader:gbl_efi_dist \
      --extra_toolchains=@gbl//toolchain:all --sandbox_debug --verbose_failures
-   $ dd if=/dev/zero of=gbl.img bs=1048576 count=128
+   $ dd if=/dev/zero of=gbl.img bs=1048576 count=2
    $ mkfs.vfat gbl.img
    $ mcopy -i gbl.img out/gbl_efi/gbl_aarch64.efi ::gbl_aarch64.efi
 
@@ -209,11 +209,11 @@ and vendor_boot.img) for sm8x50 devboards under $AOSP/out/target/product/sm8x50 
    => reset                                                                                 # this will reboot in ABL fastboot mode
    $ fastboot set_active a boot u-boot.img                                                  # reboot U-Boot on sm8550
    => run fastboot                                                                          # starting U-Boot's fastboot command
-   $ fastboot erase efi erase boot_a erase boot_b erase init_boot_a \
+   $ fastboot erase esp erase boot_a erase boot_b erase init_boot_a \
      erase init_boot_b erase vendor_boot_a erase vendor_boot_b \
      erase vbmeta_a erase vbmeta_b erase modemst1 erase modemst2 \
      erase fsg erase fsc erase misc erase metadata erase super erase userdata               # erase mmc-sdcard partitions
-   $ fastboot flash efi ./gbl.img flash boot ./boot.img \
+   $ fastboot flash esp ./gbl.img flash boot ./boot.img \
      flash init_boot ./init_boot.img flash vendor_boot ./vendor_boot.img \
      flash super ./super.img flash userdata ./userdata.img format:ext4 metadata             # flash GBL and AOSP images
    $ fastboot --disable-verity --disable-verification flash vbmeta_a ./vbmeta_disabled.img  # disable verity
