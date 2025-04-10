@@ -65,6 +65,10 @@ Compile AOSP from sources for RB5
    repo init -u https://android.googlesource.com/platform/manifest -b master
    repo sync -j`nproc`
    ./device/linaro/dragonboard/fetch-vendor-package.sh
+   cd device/linaro/dragonboard
+   git remote add d4a https://source.devboardsforandroid.linaro.org/device/linaro/dragonboard
+   git fetch d4a; git checkout d4a/d4a
+   cd -
    source ./build/envsetup.sh
    lunch db845c-trunk_staging-userdebug #DB845c builds boot on RB5 as well.
    make -j`nproc`
@@ -125,9 +129,6 @@ ToDo / Known Issues
 * Factory version of RB5 comes with older version of lt9611uxc firmware flashed
   on it, so in case you do not see display up and running then please upgrade
   the lt9611uxc firmware version to v43 or newer.
-
-* WiFi-BT drivers are WIP and not upstreamed yet. You can find the patches here
-  https://git.linaro.org/people/amit.pundir/linux.git/log/?h=rbX-mainline
 
 
 Device Maintainer(s)

@@ -43,6 +43,10 @@ Compile AOSP from sources for SM8x50 (Snapdragon 8 Gen) devices
    repo init -u https://android.googlesource.com/platform/manifest -b master
    repo sync -j`nproc`
    ./device/linaro/dragonboard/fetch-vendor-package.sh
+   cd device/linaro/dragonboard
+   git remote add d4a https://source.devboardsforandroid.linaro.org/device/linaro/dragonboard
+   git fetch d4a; git checkout d4a/d4a
+   cd $AOSP
    source ./build/envsetup.sh
    lunch sm8x50-trunk_staging-userdebug
    make -j`nproc`
@@ -72,7 +76,7 @@ default option on SM8550-HDK due to some upstream UFS breakages.
 
 We chainload U-Boot from ABL bootloader and flash the, already plugged-in,
 mmc-sdcard. For now we are using a WIP `upstream u-boot fork
-<https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/wip/sm8x50/>`_.
+<https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/wip/rbx-integration/>`_.
 
 mmc boot configuration require atleast 16GB sdcard. Here are the instructions to
 prepare and flash AOSP images on a MMC sdcard:
@@ -86,12 +90,14 @@ prepare and flash AOSP images on a MMC sdcard:
 
 .. code::
 
-   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b wip/sm8x50
+   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b wip/rbx-integration
    $ cd u-boot
-   $ make CROSS_COMPILE=aarch64-linux-gnu- qcom_defconfig all
+   $ make CROSS_COMPILE=aarch64-linux-gnu- clean qcom_defconfig all
    $ gzip u-boot-nodtb.bin
-   $ mkbootimg --os_version 14.0.0 --os_patch_level 2023-10 --header_version 2 --kernel u-boot-nodtb.bin.gz --dtb dts/upstream/src/arm64/qcom/sm8550-hdk.dtb --pagesize 2048 --cmdline "" --output u-boot-sm8550-hdk.img
-   $ fastboot boot u-boot-sm8550-hdk.img # this will boot U-Boot on sm8550-hdk
+   $ mkbootimg --os_version 14.0.0 --os_patch_level 2023-10 --header_version 2 \
+     --kernel u-boot-nodtb.bin.gz --dtb dts/upstream/src/arm64/qcom/sm8550-hdk.dtb \
+     --pagesize 2048 --cmdline "" --output u-boot.img
+   $ fastboot set_active a boot u-boot.img                                                               # this will boot U-Boot on sm8550-hdk
 
 * Prepare AOSP partition layout on the sdcard from the U-Boot prompt. Make sure
   that a 16GB+ MMC sdcard is plugged into the board:
@@ -100,11 +106,11 @@ prepare and flash AOSP images on a MMC sdcard:
 
    => run gpt_mmc_aosp
    => reset                          # this will reboot in ABL fastboot mode
-   $ fastboot boot u-boot-sm8550-hdk.img
+   $ fastboot set_active a boot u-boot.img
    => run fastboot                   # starting U-Boot's fastboot command
    $ fastboot erase boot erase init_boot erase vendor_boot erase modemst1 erase modemst2 erase fsg erase fsc erase misc erase metadata erase super erase userdata
    $ fastboot reboot                 # rebooting in ABL fastboot mode
-   $ fastboot boot u-boot-sm8550-hdk.img
+   $ fastboot set_active a boot u-boot.img
    => run fastboot
 
 * To flash images on the MMC sdcard, make sure we run U-Boot's fastboot command
@@ -114,11 +120,11 @@ prepare and flash AOSP images on a MMC sdcard:
 
    cd out/target/product/sm8x50
    fastboot flash super ./super.img flash userdata ./userdata.img format:ext4 metadata reboot
-   fastboot boot ./boot.img
+   fastboot set_active a boot ./boot.img
 
 .. note::
    We do not flash **boot.img** on the sdcard; instead, we load the boot image from
-   device RAM by running ``fastboot boot boot.img``.
+   device RAM by running ``fastboot set_active a boot boot.img``.
 
 It should boot sm8x50 devices to UI with software rendering support.
 
@@ -131,7 +137,7 @@ Flashing and booting AOSP from mmc-sdcard using Generic Bootloader Library (GBL)
 --------------------------------------------------------------------------------
 
 .. note::
-   This configuration is tested only on SM8550-HDK. Booting AOSP from a mmc
+   This configuration is tested only on RB3, RB5 and SM8550-HDK. Booting AOSP from a mmc
    sdcard using GBL is an experimental build configuration and is only
    intended to be used in the LKFT lab.
 
@@ -149,7 +155,7 @@ reboot/reset lands at the ABL fastboot mode prompt.
 
 We chainload U-Boot from ABL bootloader and flash the, already plugged-in,
 mmc-sdcard. For SM8550-HDK, we are using a WIP `upstream u-boot fork with GBL specific changes
-<https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/wip/sm8x50-gbl-fastboot/>`_.
+<https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/wip/rbx-integration/>`_.
 Here are the instructions to prepare, flash and boot AOSP images from a mmc-sdcard
 using GBL. mmc-sdcard boot configuration require atleast 16GB sdcard.
 
@@ -162,14 +168,14 @@ using GBL. mmc-sdcard boot configuration require atleast 16GB sdcard.
 
 .. code::
 
-   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b wip/sm8x50-gbl-fastboot
+   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b wip/rbx-integration
    $ cd u-boot
    $ make CROSS_COMPILE=aarch64-linux-gnu- clean qcom_defconfig all
    $ gzip u-boot-nodtb.bin
    $ mkbootimg --os_version 14.0.0 --os_patch_level 2023-10 --header_version 2 \
      --kernel u-boot-nodtb.bin.gz --dtb dts/upstream/src/arm64/qcom/sm8550-hdk.dtb \
      --pagesize 2048 --cmdline "" --output u-boot.img
-   $ fastboot boot u-boot.img                                                               # this will boot U-Boot on sm8550-hdk
+   $ fastboot set_active a boot u-boot.img                                                               # this will boot U-Boot on sm8550-hdk
 
 * Build GBL efi app and mcopy it over to the gbl.img:
 
@@ -192,6 +198,10 @@ using GBL. mmc-sdcard boot configuration require atleast 16GB sdcard.
    $ repo init -u https://android.googlesource.com/platform/manifest -b master
    $ repo sync -j`nproc`
    $ ./device/linaro/dragonboard/fetch-vendor-package.sh
+   $ cd device/linaro/dragonboard
+   $ git remote add d4a https://source.devboardsforandroid.linaro.org/device/linaro/dragonboard
+   $ git fetch d4a; git checkout d4a/d4a
+   $ cd $AOSP
    $ source ./build/envsetup.sh
    $ lunch sm8x50-trunk_staging-userdebug
    $ make TARGET_SDCARD_BOOT=true TARGET_USES_GBL=true -j`nproc`
@@ -209,11 +219,11 @@ and vendor_boot.img) for sm8x50 devboards under $AOSP/out/target/product/sm8x50 
    => reset                                                                                 # this will reboot in ABL fastboot mode
    $ fastboot set_active a boot u-boot.img                                                  # reboot U-Boot on sm8550
    => run fastboot                                                                          # starting U-Boot's fastboot command
-   $ fastboot erase esp erase boot_a erase boot_b erase init_boot_a \
+   $ fastboot erase gbl erase boot_a erase boot_b erase init_boot_a \
      erase init_boot_b erase vendor_boot_a erase vendor_boot_b \
      erase vbmeta_a erase vbmeta_b erase modemst1 erase modemst2 \
      erase fsg erase fsc erase misc erase metadata erase super erase userdata               # erase mmc-sdcard partitions
-   $ fastboot flash esp ./gbl.img flash boot ./boot.img \
+   $ fastboot flash gbl ./gbl.img flash boot ./boot.img \
      flash init_boot ./init_boot.img flash vendor_boot ./vendor_boot.img \
      flash super ./super.img flash userdata ./userdata.img format:ext4 metadata             # flash GBL and AOSP images
    $ fastboot --disable-verity --disable-verification flash vbmeta_a ./vbmeta_disabled.img  # disable verity
@@ -259,7 +269,7 @@ Then rebuild AOSP and boot with new boot.img using:
 .. code::
 
    make TARGET_KERNEL_USE=mainline bootimage -j`nproc`'
-   fastboot boot ./boot.img
+   fastboot set_active a boot ./boot.img
 
 
 #. Download and build upstream tracking kernel
@@ -287,6 +297,9 @@ Then rebuild AOSP and boot with new boot.img using:
 
 Known issues and Troubleshooting on sm8550-hdk
 ----------------------------------------------
+
+#. Fastboot over U-Boot takes about 30seconds to initialize on the HOST machine
+   after running "run fastboot" command on the U-Boot shell.
 
 #. UFS is not stable. There are a series of known issues that are currently
    being worked upon.

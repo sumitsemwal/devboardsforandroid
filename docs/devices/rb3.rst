@@ -67,6 +67,10 @@ Compile AOSP from sources for RB3
    repo init -u https://android.googlesource.com/platform/manifest -b master
    repo sync -j`nproc`
    ./device/linaro/dragonboard/fetch-vendor-package.sh
+   cd device/linaro/dragonboard
+   git remote add d4a https://source.devboardsforandroid.linaro.org/device/linaro/dragonboard
+   git fetch d4a; git checkout d4a/d4a
+   cd -
    source ./build/envsetup.sh
    lunch db845c-trunk_staging-userdebug
    make -j`nproc`
@@ -133,7 +137,7 @@ Booting from external sdcards will help prevent the internal emmc/ufs wear off
 in the long run and extend the lab-life of most of our devboards. To avoid
 flashing anything on internal UFS and boot solely from a sdcard, we are
 switching to chainloading U-Boot from ABL bootloader. For now we are using a WIP
-`upstream u-boot fork <https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/rbx-integration>`_.
+`upstream u-boot fork <https://source.devboardsforandroid.linaro.org/platform/external/u-boot/+/refs/heads/wip/rbx-integration>`_.
 
 .. note::
    In the long run we plan to switch to AOSP/external/u-boot project to catch up
@@ -160,12 +164,15 @@ the instructions to prepare and flash AOSP images on a MMC sdcard:
 
 ::
 
-   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b rbx-integration
+   $ git clone https://source.devboardsforandroid.linaro.org/platform/external/u-boot -b wip/rbx-integration
    $ cd u-boot
-   $ source envsetup.sh
-   $ mu qcom_defconfig
-   $ budt dragonboard845c
-   $ fastboot boot /tmp/u-boot.img   # this will boot U-Boot on DB845c
+   $ make CROSS_COMPILE=aarch64-linux-gnu- clean qcom_defconfig all
+   $ gzip u-boot-nodtb.bin
+   $ mkbootimg --os_version 14.0.0 --os_patch_level 2023-10 --header_version 2 \
+      --kernel u-boot-nodtb.bin.gz --dtb dts/upstream/src/arm64/qcom/sdm845-db845c.dtb \
+      --pagesize 2048 --cmdline "" --output u-boot.img
+   $ fastboot boot u-boot.img                                                               # this will boot U-Boot on RB3
+
 
 * Prepare AOSP partition layout on the sdcard from the U-Boot prompt. Make sure
   that a 16GB+ MMC sdcard is plugged into the board:
@@ -174,11 +181,11 @@ the instructions to prepare and flash AOSP images on a MMC sdcard:
 
    => run gpt_mmc_aosp
    => reset                          # this will reboot in ABL fastboot mode
-   $ fastboot boot /tmp/u-boot.img
+   $ fastboot boot u-boot.img                                                               # this will boot U-Boot on RB3
    => run fastboot                   # starting U-Boot's fastboot command
    $ fastboot erase boot erase init_boot erase vendor_boot erase modemst1 erase modemst2 erase fsg erase fsc erase misc erase metadata erase super erase userdata
    $ fastboot reboot                 # rebooting in ABL fastboot mode
-   $ fastboot boot /tmp/u-boot.img
+   $ fastboot boot u-boot.img                                                               # this will boot U-Boot on RB3
    => run fastboot
 
 * Build AOSP target db845c-userdebug with MMC sdcard support and flash images on
